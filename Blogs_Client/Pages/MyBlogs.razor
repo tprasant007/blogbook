@@ -1,0 +1,64 @@
+﻿@page "/myblogs"
+@inject IMyBlogService MyBlogService
+@inject IAuthService AuthService
+
+<PageTitle>My Blogs</PageTitle>
+@if (isLoading)
+{
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="spinner-border"></div>
+    </div>
+}
+else
+{
+    @if (AuthService.User == null)
+    {
+        <div>
+            <p>Please <a href="/login">login</a> to view your blogs.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var blog in blogs)
+        {
+            <div class="card my-4">
+                <h3 class="card-header bg-secondary text-white">@blog.Title</h3>
+                <div class="card-body">
+                    <div class="py-2">
+                        @((MarkupString)Markdig.Markdown.ToHtml(blog.Content))
+                    </div>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a class="btn btn-outline-primary me-2" role="button" href=@($"/createblog/{blog.Id}")>Edit</a>
+                        <button class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="@GetDeleteModalId(blog)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <DeleteBlog Blog="@blog" />
+        }
+    }
+}
+
+
+
+@code {
+    private List<MyBlog> blogs = new List<MyBlog>();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.User != null)
+        {
+            blogs = await MyBlogService.GetMyBlogs();
+            isLoading = false;
+        }
+         
+    }
+    private string GetDeleteModalId(MyBlog blog)
+    {
+        return $"#{DeleteBlog.GetModalId(blog)}";
+    }
+}

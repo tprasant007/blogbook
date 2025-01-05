@@ -1,0 +1,53 @@
+﻿@page "/blogs/{id:int}"
+@inject IBlogService BlogService
+
+@if (isLoading)
+{
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="spinner-border"></div>
+    </div>
+}
+else
+{
+    @if (currentBlog == null)
+    {
+        <div class="container my-1">
+            <div class="bg-light text-center py-3">
+                <h4 class="display-6">No such blog found.</h4>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="container my-1">
+            <div class="bg-light text-center py-3">
+                <h2 class="display-4">@currentBlog.Title</h2>
+            </div>
+            <div class="py-4">
+                @((MarkupString)Markdig.Markdown.ToHtml(currentBlog.Content))
+            </div>
+
+            <div class="text-end text-muted py-2">
+                <p class="mb-0">@($"Written by: {currentBlog.BlogCreator}")</p>
+                @* <p>Published on: December 26, 2024</p> *@
+            </div>
+        </div>
+    }
+}
+
+
+
+
+@code 
+{
+    [Parameter]
+    public int Id { get; set; }
+    public Blog? currentBlog;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentBlog = await BlogService.GetBlogById(Id);
+        isLoading = false;
+    }
+}

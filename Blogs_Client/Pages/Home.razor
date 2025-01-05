@@ -1,0 +1,36 @@
+﻿@page "/"
+@using Blogs_Client.Model
+@inject IBlogService BlogService
+
+<PageTitle>Home</PageTitle>
+@if (isLoading)
+{
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="spinner-border"></div>
+    </div>
+}
+else
+{
+    @foreach (var blog in blogs)
+    {
+        <div class="card my-4">
+            <div class="card-body">
+                <h3 class="card-title">@blog.Title</h3>
+                <p>@(blog.Content.Length > 100 ? blog.Content.Substring(0, 100) + "..." : blog.Content)</p>
+
+                <a href="/blogs/@blog.Id" class="btn btn-primary">Read more</a>
+            </div>
+        </div>
+    }
+}
+
+
+@code {
+    private List<Blog> blogs = new List<Blog>();
+    private bool isLoading = true;
+    protected override async Task OnInitializedAsync()
+    {
+        blogs = await BlogService.GetAllBlogs();
+        isLoading = false;
+    }
+}

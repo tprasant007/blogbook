@@ -1,0 +1,74 @@
+﻿@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4 bg-light p-4 rounded">
+        <h3 class="row justify-content-center">Signup</h3>
+        <EditForm Model="@registrationModel">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mb-3">
+                <label for="username", class="form-label">Username:</label>
+                <InputText id="username" @bind-Value="registrationModel.Username" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="email" , class="form-label">Email:</label>
+                <InputText id="email" @bind-Value="registrationModel.Email" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <InputText id="password" @bind-Value="registrationModel.Password" type="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary" @onclick="HandleRegister">Signup</button>
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <div class="alert alert-danger mt-3 mb-0 p-2">@error</div>
+            }
+        </EditForm>
+        @if(isRegistrationSuccess){
+            <p class="text-success pt-2">Successfully Registered! Go back to <a href="/login">login</a> page to login.</p>
+        }
+    </div>
+</div>
+
+@code {
+    private RegistrationModel registrationModel = new RegistrationModel();
+    private bool isRegistrationSuccess = false;
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        // redirect to home if already logged in
+        if (AuthService.User != null)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            await AuthService.Register(registrationModel.Username, registrationModel.Email, registrationModel.Password);
+            isRegistrationSuccess = true;
+            error = "";
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    public class RegistrationModel()
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

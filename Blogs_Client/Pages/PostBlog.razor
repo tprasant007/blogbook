@@ -1,0 +1,94 @@
+﻿@page "/createblog"
+@page "/createblog/{id:int}"
+
+@inject IAuthService AuthService
+@inject IBlogService BlogService
+@inject IMyBlogService MyBlogService
+@inject NavigationManager Navigation
+
+<h3 class="text-center my-4">Create a New Blog</h3>
+
+<div class="row justify-content-center">
+    @if (user == null)
+    {
+        <div class="mb-3">Please <a href="/login">login</a> to create a blog.</div>
+    }
+    else
+    {
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <EditForm Model="@createBlog" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="blogHeading" class="form-label">Blog Heading</label>
+                            <InputText @bind-Value="createBlog.Title" class="form-control" id="blogHeading" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="blogContent" class="form-label">Blog Content</label>
+                            <InputTextArea @bind-Value="createBlog.Content" class="form-control" id="blogContent" rows="6"></InputTextArea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Post</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private CreateBlog createBlog { get; set; } = new CreateBlog();
+
+    private User? user;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = AuthService.User;
+
+        // If editing an existing blog, fetch and populate the form
+        if (Id.HasValue)
+        {
+            var blog = await BlogService.GetBlogById(Id.Value);
+            if (blog != null)
+            {
+                createBlog = new CreateBlog
+                    {
+                        Title = blog.Title,
+                        Content = blog.Content
+                    };
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(createBlog);
+            if (Id is null)
+            {
+                await BlogService.CreateBlog(createBlog);
+            }
+            else
+            {
+                await MyBlogService.UpdateBlog(Id.Value, createBlog);
+            }
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+}
+
